@@ -1,0 +1,7 @@
+test-app/node_modules
+test-app/www
+package/node_modules
+package/src/AuthenticationService.js
+package/src/AuthenticationService.js.map
+test-app/platforms
+test-app/plugins

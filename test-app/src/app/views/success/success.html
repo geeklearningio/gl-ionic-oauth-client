@@ -1,0 +1,11 @@
+﻿<ion-header-bar class="bar-positive">
+    <h1 class="title">Test App</h1>
+</ion-header-bar>
+
+<ion-content class="padding text-center">
+    <div ng-if="!success.newAccessToken">Success !</div>
+    <button ng-click="success.refreshToken()" class="button button-positive" ng-show="!success.newAccessToken && !success.authenticationService.isLoading">Refresh token</button>
+    <ion-spinner class="spinner-positive" icon="spiral" ng-show="success.authenticationService.isLoading"></ion-spinner>
+    <div ng-if="success.newAccessToken">Got new access token: {{success.newAccessToken}}</div>
+    <button ng-click="success.logout()" class="button button-assertive" ng-show="!success.authenticationService.isLoading">Logout</button>
+</ion-content>

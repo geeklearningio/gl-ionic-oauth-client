@@ -1,0 +1,8 @@
+﻿<ion-header-bar class="bar-positive">
+    <h1 class="title">Test App</h1>
+</ion-header-bar>
+
+<ion-content class="padding text-center">
+    <button ng-click="main.launchOAuth()" class="button button-positive" ng-show="!main.authenticationService.isLoading">Connect</button>
+    <ion-spinner class="spinner-positive" icon="spiral" ng-show="main.authenticationService.isLoading"></ion-spinner>
+</ion-content>

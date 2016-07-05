@@ -1,0 +1,17 @@
+{
+  "name": "gl-ionic-oauth-client",
+  "version": "0.0.1",
+  "description": "Authentification module for Ionic",
+  "scripts": {
+    "build": "webpack"
+  },
+  "author": "Michel Vidailhet",
+  "license": "MIT",
+  "devDependencies": {
+    "awesome-typescript-loader": "^1.1.1",
+    "ng-annotate-webpack-plugin": "^0.1.3",
+    "typescript": "^1.8.10",
+    "typings": "^1.3.0",
+    "webpack": "^1.13.1"
+  }
+}
