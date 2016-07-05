@@ -119,7 +119,9 @@ export class AuthenticationService {
     var refreshToken = this.readStorageRefreshToken();
     if (refreshToken) {
       apiRefreshTokenFunction({
-        refreshToken: refreshToken
+        authRequest: {
+          refreshToken: refreshToken
+        }
       })
         .then((result) => {
           this.writeStorageAccessToken(result.data.content.accessToken);

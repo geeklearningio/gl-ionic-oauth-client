@@ -54,14 +54,14 @@
 	"use strict";
 	var AuthenticationService = (function () {
 	    /* @ngInject */
-	    AuthenticationService.$inject = ["$rootScope", "$q", "ionic", "$cordovaInAppBrowser", "$state", "$ionicPopup", "$window"];
-	    function AuthenticationService($rootScope, $q, ionic, $cordovaInAppBrowser, $state, $ionicPopup, $window) {
+	    AuthenticationService.$inject = ["$rootScope", "$q", "ionic", "$cordovaInAppBrowser", "$state", "$timeout", "$window"];
+	    function AuthenticationService($rootScope, $q, ionic, $cordovaInAppBrowser, $state, $timeout, $window) {
 	        this.$rootScope = $rootScope;
 	        this.$q = $q;
 	        this.ionic = ionic;
 	        this.$cordovaInAppBrowser = $cordovaInAppBrowser;
 	        this.$state = $state;
-	        this.$ionicPopup = $ionicPopup;
+	        this.$timeout = $timeout;
 	        this.$window = $window;
 	        this.cordovaInAppBrowserLoadstartUnsuscribe = null;
 	        this.cordovaInAppBrowserExitUnsuscribe = null;
@@ -72,11 +72,29 @@
 	            this.isLoggedIn = false;
 	        }
 	    }
-	    AuthenticationService.prototype.init = function (clientId, baseAuthUrl, apiOAuthFunction) {
+	    AuthenticationService.prototype.init = function (clientId, baseAuthUrl) {
 	        this.clientId = clientId;
 	        this.baseAuthUrl = baseAuthUrl;
-	        this.apiOAuthFunction = apiOAuthFunction;
 	        this.generateState();
+	    };
+	    AuthenticationService.prototype.handleOAuth = function (apiOAuthFunction, successRedirectUrlAndState, oAuthRedirectUrl) {
+	        var _this = this;
+	        if (oAuthRedirectUrl === void 0) { oAuthRedirectUrl = 'login'; }
+	        this.apiOAuthFunction = apiOAuthFunction;
+	        if (!this.handleLogin(successRedirectUrlAndState)) {
+	            this.authenticationCodeDidNotWork = false;
+	            if (this.ionic.Platform.isReady || !this.ionic.Platform.isWebView()) {
+	                this.launchOAuth(oAuthRedirectUrl);
+	            }
+	            else {
+	                // if ionic is not ready, wait for 1 second before launching the In App browser or it won't launch on iOS...
+	                this.ionic.Platform.ready(function () {
+	                    _this.$timeout(function () {
+	                        _this.launchOAuth(oAuthRedirectUrl);
+	                    }, 1000);
+	                });
+	            }
+	        }
 	    };
 	    AuthenticationService.prototype.handleLogin = function (successRedirectUrlAndState) {
 	        if (this.handleAuthentificationCode(successRedirectUrlAndState)) {
@@ -126,7 +144,9 @@
 	        var refreshToken = this.readStorageRefreshToken();
 	        if (refreshToken) {
 	            apiRefreshTokenFunction({
-	                refreshToken: refreshToken
+	                authRequest: {
+	                    refreshToken: refreshToken
+	                }
 	            })
 	                .then(function (result) {
 	                _this.writeStorageAccessToken(result.data.content.accessToken);
@@ -152,6 +172,9 @@
 	        this.oAuthState = text;
 	    };
 	    AuthenticationService.prototype.handleAuthentificationCode = function (successRedirectUrlAndState) {
+	        if (this.authenticationCodeDidNotWork) {
+	            return;
+	        }
 	        this.successRedirectUrlAndState = successRedirectUrlAndState;
 	        this.isLoading = true;
 	        var code = this.getUrlParameter('code');
@@ -242,6 +265,7 @@
 	                var onFailure = function (reason) {
 	                    _this.isLoading = false;
 	                    _this.$cordovaInAppBrowser.close();
+	                    _this.$rootScope.$broadcast(AuthenticationService.AuthenticationOAuthError);
 	                };
 	            }
 	        }
@@ -261,25 +285,19 @@
 	                _this.$state.go(_this.successRedirectUrlAndState.state);
 	            }
 	        }, function (error) {
-	            var myPopup = _this.$ionicPopup.show({
-	                template: 'Nous n\'avons pas pu vous connecter. Veuillez réessayer.',
-	                title: 'Problème de connexion',
-	                buttons: [
-	                    {
-	                        text: 'Ok',
-	                        type: 'button-royal'
-	                    }
-	                ]
-	            });
+	            // if the authentication code didn't work, do not try to use it again
+	            _this.authenticationCodeDidNotWork = true;
+	            _this.$rootScope.$broadcast(AuthenticationService.AuthenticationOAuthError);
 	            _this.isLoading = false;
 	        });
 	    };
 	    AuthenticationService.AuthenticationAccessTokenStorageKey = "authentication.service.accessToken";
 	    AuthenticationService.AuthenticationRefreshTokenStorageKey = "authentication.service.refreshToken";
+	    AuthenticationService.AuthenticationOAuthError = 'authentication.service.oauthError';
 	    return AuthenticationService;
 	}());
 	exports.AuthenticationService = AuthenticationService;
-	exports = angular.module("bpce-connect", [])
+	exports = angular.module("gl-ionic-oauth-client", [])
 	    .service("authenticationService", AuthenticationService);
 
 
