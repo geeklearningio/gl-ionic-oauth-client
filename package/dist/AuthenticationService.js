@@ -120,20 +120,15 @@
 	            '&response_type=code&redirect_uri=' + encodeURIComponent(redirectUri);
 	        this.launchExternalLink(authUrl, '_blank');
 	    };
-	    AuthenticationService.prototype.getAuthorizationHeader = function () {
-	        return this.authorizationHeader;
-	    };
-	    AuthenticationService.prototype.setAuthorizationHeader = function (accessToken) {
-	        this.authorizationHeader = 'Bearer ' + accessToken;
-	    };
 	    AuthenticationService.prototype.configureRequest = function (httpRequestParams) {
-	        httpRequestParams.headers['Authorization'] = this.authorizationHeader;
+	        httpRequestParams.headers['Authorization'] = 'Bearer ' + this.readStorageAccessToken();
 	        return httpRequestParams;
 	    };
 	    AuthenticationService.prototype.logout = function (logoutState) {
 	        if (logoutState === void 0) { logoutState = 'login'; }
 	        this.isLoggedIn = false;
 	        this.removeStorageAccessToken();
+	        this.removeStorageRefreshToken();
 	        this.$state.go(logoutState);
 	    };
 	    AuthenticationService.prototype.refreshTokenOrLogout = function (apiRefreshTokenFunction, logoutState) {
@@ -154,6 +149,7 @@
 	                deferred.resolve(result);
 	            }, function (error) {
 	                _this.isLoading = false;
+	                _this.logout();
 	                deferred.reject(error);
 	            });
 	        }
@@ -212,10 +208,6 @@
 	    };
 	    AuthenticationService.prototype.writeStorageAccessToken = function (authToken) {
 	        localStorage.setItem(AuthenticationService.AuthenticationAccessTokenStorageKey, authToken);
-	        this.setAuthorizationHeader(authToken);
-	    };
-	    AuthenticationService.prototype.writeStorageRefreshToken = function (refreshToken) {
-	        localStorage.setItem(AuthenticationService.AuthenticationRefreshTokenStorageKey, refreshToken);
 	    };
 	    AuthenticationService.prototype.readStorageAccessToken = function () {
 	        return localStorage.getItem(AuthenticationService.AuthenticationAccessTokenStorageKey);
@@ -223,8 +215,14 @@
 	    AuthenticationService.prototype.removeStorageAccessToken = function () {
 	        delete window.localStorage[AuthenticationService.AuthenticationAccessTokenStorageKey];
 	    };
+	    AuthenticationService.prototype.writeStorageRefreshToken = function (refreshToken) {
+	        localStorage.setItem(AuthenticationService.AuthenticationRefreshTokenStorageKey, refreshToken);
+	    };
 	    AuthenticationService.prototype.readStorageRefreshToken = function () {
 	        return localStorage.getItem(AuthenticationService.AuthenticationRefreshTokenStorageKey);
+	    };
+	    AuthenticationService.prototype.removeStorageRefreshToken = function () {
+	        delete window.localStorage[AuthenticationService.AuthenticationRefreshTokenStorageKey];
 	    };
 	    AuthenticationService.prototype.launchExternalLink = function (url, target) {
 	        var _this = this;

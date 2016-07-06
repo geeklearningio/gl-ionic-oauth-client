@@ -22,7 +22,6 @@ export declare class AuthenticationService {
     private clientId;
     private baseAuthUrl;
     private oAuthState;
-    private authorizationHeader;
     isLoggedIn: boolean;
     isLoading: boolean;
     private authenticationCodeDidNotWork;
@@ -31,8 +30,6 @@ export declare class AuthenticationService {
     handleOAuth(apiOAuthFunction: Function, successRedirectUrlAndState: IUrlAndState, oAuthRedirectUrl?: string): void;
     private handleLogin(successRedirectUrlAndState);
     private launchOAuth(oAuthRedirectUrl?);
-    getAuthorizationHeader(): string;
-    setAuthorizationHeader(accessToken: string): void;
     configureRequest(httpRequestParams: any): any;
     logout(logoutState?: string): void;
     refreshTokenOrLogout(apiRefreshTokenFunction: Function, logoutState?: string): angular.IPromise<any>;
@@ -41,10 +38,11 @@ export declare class AuthenticationService {
     private getUrlParameter(name);
     private oAuth(accessCode);
     private writeStorageAccessToken(authToken);
-    private writeStorageRefreshToken(refreshToken);
     private readStorageAccessToken();
     private removeStorageAccessToken();
+    private writeStorageRefreshToken(refreshToken);
     private readStorageRefreshToken();
+    private removeStorageRefreshToken();
     private launchExternalLink(url, target);
     private oauthLogin(code, redirect?);
 }

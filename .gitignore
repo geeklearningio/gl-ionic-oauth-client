@@ -5,3 +5,4 @@ package/src/AuthenticationService.js
 package/src/AuthenticationService.js.map
 test-app/platforms
 test-app/plugins
+npm-debug.log
