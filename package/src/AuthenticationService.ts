@@ -141,6 +141,7 @@ export class AuthenticationService {
                 }
             })
                 .then((result) => {
+                    this.$rootScope.$broadcast(AuthenticationService.AuthenticationOAuthSuccess);
                     this.writeStorageAccessToken(result.data.content.accessToken);
                     this.isLoading = false;
                     deferred.resolve(result);

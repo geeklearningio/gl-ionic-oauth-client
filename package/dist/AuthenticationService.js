@@ -72,25 +72,36 @@
 	            this.isLoggedIn = false;
 	        }
 	    }
+	    /**
+	     * Init the Service
+	     * @param clientId: the app client ID
+	     * @param baseAuthUrl: the Login function url of your OAuth server
+	     */
 	    AuthenticationService.prototype.init = function (clientId, baseAuthUrl) {
 	        this.clientId = clientId;
 	        this.baseAuthUrl = baseAuthUrl;
 	        this.generateState();
 	    };
-	    AuthenticationService.prototype.handleOAuth = function (apiOAuthFunction, successRedirectUrlAndState, oAuthRedirectUrl) {
+	    /**
+	     * Handle the OAuth of your application
+	     * @param apiOAuthFunction: Your API function that will give you the accessToken by getting the accessCode.
+	     * @param successRedirectUrlAndState: the url and state of the page you want to go to when the Authentication has succeeded. (The url is needed to work in the web version of your app).
+	     * @param oAuthRedirectState: the state to redirect to with the accessCode as a Query param.
+	     */
+	    AuthenticationService.prototype.handleOAuth = function (apiOAuthFunction, successRedirectUrlAndState, oAuthRedirectState) {
 	        var _this = this;
-	        if (oAuthRedirectUrl === void 0) { oAuthRedirectUrl = 'login'; }
+	        if (oAuthRedirectState === void 0) { oAuthRedirectState = 'login'; }
 	        this.apiOAuthFunction = apiOAuthFunction;
 	        if (!this.handleLogin(successRedirectUrlAndState)) {
 	            this.authenticationCodeDidNotWork = false;
 	            if (this.ionic.Platform.isReady || !this.ionic.Platform.isWebView()) {
-	                this.launchOAuth(oAuthRedirectUrl);
+	                this.launchOAuth(oAuthRedirectState);
 	            }
 	            else {
 	                // if ionic is not ready, wait for 1 second before launching the In App browser or it won't launch on iOS...
 	                this.ionic.Platform.ready(function () {
 	                    _this.$timeout(function () {
-	                        _this.launchOAuth(oAuthRedirectUrl);
+	                        _this.launchOAuth(oAuthRedirectState);
 	                    }, 1000);
 	                });
 	            }
@@ -106,13 +117,13 @@
 	        }
 	        return false;
 	    };
-	    AuthenticationService.prototype.launchOAuth = function (oAuthRedirectUrl) {
-	        if (oAuthRedirectUrl === void 0) { oAuthRedirectUrl = 'login'; }
+	    AuthenticationService.prototype.launchOAuth = function (oAuthRedirectState) {
+	        if (oAuthRedirectState === void 0) { oAuthRedirectState = 'login'; }
 	        this.isLoading = true;
-	        this.oAuthRedirectUrl = oAuthRedirectUrl;
-	        var redirectUri = document.URL + this.oAuthRedirectUrl;
+	        this.oAuthRedirectState = oAuthRedirectState;
+	        var redirectUri = document.URL + this.oAuthRedirectState;
 	        if (this.ionic.Platform.isWebView()) {
-	            redirectUri = 'http://localhost/#/' + this.oAuthRedirectUrl;
+	            redirectUri = 'http://localhost/#/' + this.oAuthRedirectState;
 	        }
 	        var authUrl = this.baseAuthUrl + '?protocol=oauth2&scope=' +
 	            '&client_id=' + this.clientId +
@@ -120,10 +131,19 @@
 	            '&response_type=code&redirect_uri=' + encodeURIComponent(redirectUri);
 	        this.launchExternalLink(authUrl, '_blank');
 	    };
+	    /**
+	     * Configure your requests headers with the accessToken
+	     * @param httpRequestParams
+	     * @returns {any}
+	     */
 	    AuthenticationService.prototype.configureRequest = function (httpRequestParams) {
 	        httpRequestParams.headers['Authorization'] = 'Bearer ' + this.readStorageAccessToken();
 	        return httpRequestParams;
 	    };
+	    /**
+	     * Disconnect the user from your app
+	     * @param logoutState: the state to go to after the logout.
+	     */
 	    AuthenticationService.prototype.logout = function (logoutState) {
 	        if (logoutState === void 0) { logoutState = 'login'; }
 	        this.isLoggedIn = false;
@@ -131,6 +151,12 @@
 	        this.removeStorageRefreshToken();
 	        this.$state.go(logoutState);
 	    };
+	    /**
+	     * Refresh the accessToken using the refreshToken or logout if it fails doing so.
+	     * @param apiRefreshTokenFunction: the refreshToken function of your API.
+	     * @param logoutState: the state to got to after the logout.
+	     * @returns {IPromise<any>}
+	     */
 	    AuthenticationService.prototype.refreshTokenOrLogout = function (apiRefreshTokenFunction, logoutState) {
 	        var _this = this;
 	        if (logoutState === void 0) { logoutState = 'login'; }
@@ -144,6 +170,7 @@
 	                }
 	            })
 	                .then(function (result) {
+	                _this.$rootScope.$broadcast(AuthenticationService.AuthenticationOAuthSuccess);
 	                _this.writeStorageAccessToken(result.data.content.accessToken);
 	                _this.isLoading = false;
 	                deferred.resolve(result);
