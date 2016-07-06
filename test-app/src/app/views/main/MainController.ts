@@ -41,11 +41,11 @@ export class MainController {
 
     launchOAuth () {
         var apiOAuthFunction = this.fakeAPIService.connect.bind(this.fakeAPIService);
-        var oauthRedirectUrl = 'main';
+        var oauthRedirectState = 'main';
         var successRedirectUrlAndState = {
             state: 'success',
             url: 'success'
         };
-        this.authenticationService.handleOAuth(apiOAuthFunction, successRedirectUrlAndState, oauthRedirectUrl);
+        this.authenticationService.handleOAuth(apiOAuthFunction, successRedirectUrlAndState, oauthRedirectState);
     }
 }

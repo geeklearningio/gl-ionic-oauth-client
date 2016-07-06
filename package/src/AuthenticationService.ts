@@ -15,7 +15,7 @@ export class AuthenticationService {
     private isAuthenticating: boolean;
 
     private apiOAuthFunction: Function;
-    private oAuthRedirectUrl: string;
+    private oAuthRedirectState: string;
     private successRedirectUrlAndState: IUrlAndState;
 
     private clientId: string;
@@ -42,23 +42,34 @@ export class AuthenticationService {
         }
     }
 
+    /**
+     * Init the Service
+     * @param clientId: the app client ID
+     * @param baseAuthUrl: the Login function url of your OAuth server
+     */
     public init(clientId: string, baseAuthUrl: string) {
         this.clientId = clientId;
         this.baseAuthUrl = baseAuthUrl;
         this.generateState();
     }
 
-    public handleOAuth(apiOAuthFunction: Function, successRedirectUrlAndState: IUrlAndState, oAuthRedirectUrl: string = 'login') {
+    /**
+     * Handle the OAuth of your application
+     * @param apiOAuthFunction: Your API function that will give you the accessToken by getting the accessCode.
+     * @param successRedirectUrlAndState: the url and state of the page you want to go to when the Authentication has succeeded. (The url is needed to work in the web version of your app).
+     * @param oAuthRedirectState: the state to redirect to with the accessCode as a Query param.
+     */
+    public handleOAuth(apiOAuthFunction: Function, successRedirectUrlAndState: IUrlAndState, oAuthRedirectState: string = 'login') {
         this.apiOAuthFunction = apiOAuthFunction;
         if (!this.handleLogin(successRedirectUrlAndState)) {
             this.authenticationCodeDidNotWork = false;
             if (this.ionic.Platform.isReady || !this.ionic.Platform.isWebView()) {
-                this.launchOAuth(oAuthRedirectUrl);
+                this.launchOAuth(oAuthRedirectState);
             } else {
                 // if ionic is not ready, wait for 1 second before launching the In App browser or it won't launch on iOS...
                 this.ionic.Platform.ready(() => {
                     this.$timeout(() => {
-                        this.launchOAuth(oAuthRedirectUrl);
+                        this.launchOAuth(oAuthRedirectState);
                     }, 1000);
                 });
             }
@@ -76,13 +87,13 @@ export class AuthenticationService {
         return false;
     }
 
-    private launchOAuth(oAuthRedirectUrl: string = 'login') {
+    private launchOAuth(oAuthRedirectState: string = 'login') {
         this.isLoading = true;
-        this.oAuthRedirectUrl = oAuthRedirectUrl;
+        this.oAuthRedirectState = oAuthRedirectState;
 
-        var redirectUri = document.URL + this.oAuthRedirectUrl;
+        var redirectUri = document.URL + this.oAuthRedirectState;
         if (this.ionic.Platform.isWebView()) {
-            redirectUri = 'http://localhost/#/' + this.oAuthRedirectUrl;
+            redirectUri = 'http://localhost/#/' + this.oAuthRedirectState;
         }
 
         var authUrl: string = this.baseAuthUrl + '?protocol=oauth2&scope=' +
@@ -92,11 +103,20 @@ export class AuthenticationService {
         this.launchExternalLink(authUrl, '_blank');
     }
 
+    /**
+     * Configure your requests headers with the accessToken
+     * @param httpRequestParams
+     * @returns {any}
+     */
     public configureRequest(httpRequestParams: any): any {
         httpRequestParams.headers['Authorization'] = 'Bearer ' + this.readStorageAccessToken();
         return httpRequestParams;
     }
 
+    /**
+     * Disconnect the user from your app
+     * @param logoutState: the state to go to after the logout.
+     */
     public logout(logoutState: string = 'login') {
         this.isLoggedIn = false;
         this.removeStorageAccessToken();
@@ -104,6 +124,12 @@ export class AuthenticationService {
         this.$state.go(logoutState);
     }
 
+    /**
+     * Refresh the accessToken using the refreshToken or logout if it fails doing so.
+     * @param apiRefreshTokenFunction: the refreshToken function of your API.
+     * @param logoutState: the state to got to after the logout.
+     * @returns {IPromise<any>}
+     */
     public refreshTokenOrLogout(apiRefreshTokenFunction: Function, logoutState: string = 'login'): angular.IPromise<any> {
         var deferred: ng.IDeferred<any> = this.$q.defer();
         this.isLoading = true;
