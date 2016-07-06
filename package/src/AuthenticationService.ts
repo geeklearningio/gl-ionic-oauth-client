@@ -8,6 +8,7 @@ export class AuthenticationService {
     public static AuthenticationRefreshTokenStorageKey: string = "authentication.service.refreshToken";
 
     public static AuthenticationOAuthError: string = 'authentication.service.oauthError';
+    public static AuthenticationOAuthSuccess: string = 'authentication.service.oauthSuccess';
 
     private cordovaInAppBrowserLoadstartUnsuscribe: any = null;
     private cordovaInAppBrowserExitUnsuscribe: any = null;
@@ -253,6 +254,7 @@ export class AuthenticationService {
     private oauthLogin(code: string, redirect: boolean = true) {
         this.oAuth(code)
             .then((result) => {
+                this.$rootScope.$broadcast(AuthenticationService.AuthenticationOAuthSuccess);
                 this.isAuthenticating = false;
                 this.isLoading = false;
                 var tempArr = document.URL.split('/?');

@@ -273,6 +273,7 @@
 	        if (redirect === void 0) { redirect = true; }
 	        this.oAuth(code)
 	            .then(function (result) {
+	            _this.$rootScope.$broadcast(AuthenticationService.AuthenticationOAuthSuccess);
 	            _this.isAuthenticating = false;
 	            _this.isLoading = false;
 	            var tempArr = document.URL.split('/?');
@@ -292,6 +293,7 @@
 	    AuthenticationService.AuthenticationAccessTokenStorageKey = "authentication.service.accessToken";
 	    AuthenticationService.AuthenticationRefreshTokenStorageKey = "authentication.service.refreshToken";
 	    AuthenticationService.AuthenticationOAuthError = 'authentication.service.oauthError';
+	    AuthenticationService.AuthenticationOAuthSuccess = 'authentication.service.oauthSuccess';
 	    return AuthenticationService;
 	}());
 	exports.AuthenticationService = AuthenticationService;

@@ -13,6 +13,7 @@ export declare class AuthenticationService {
     static AuthenticationAccessTokenStorageKey: string;
     static AuthenticationRefreshTokenStorageKey: string;
     static AuthenticationOAuthError: string;
+    static AuthenticationOAuthSuccess: string;
     private cordovaInAppBrowserLoadstartUnsuscribe;
     private cordovaInAppBrowserExitUnsuscribe;
     private isAuthenticating;
