@@ -180,7 +180,7 @@ export class AuthenticationService {
         return deferred.promise;
     }
 
-    private writeStorageAccessToken(authToken: string): void {
+    public writeStorageAccessToken(authToken: string): void {
         localStorage.setItem(AuthenticationService.AuthenticationAccessTokenStorageKey, authToken);
     }
 

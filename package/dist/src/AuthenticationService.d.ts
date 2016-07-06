@@ -38,7 +38,7 @@ export declare class AuthenticationService {
     private handleAuthentificationCode(successRedirectUrlAndState);
     private getUrlParameter(name);
     private oAuth(accessCode);
-    private writeStorageAccessToken(authToken);
+    writeStorageAccessToken(authToken: string): void;
     private readStorageAccessToken();
     private removeStorageAccessToken();
     private writeStorageRefreshToken(refreshToken);
