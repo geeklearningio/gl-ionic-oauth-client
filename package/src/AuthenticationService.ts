@@ -270,6 +270,7 @@ export class AuthenticationService {
 
     public writeStorageAccessToken(authToken:string):void {
         this.keyValueStorageService.set(AuthenticationService.AuthenticationAccessTokenStorageKey, authToken);
+        this.currentAccessToken = authToken;
     }
 
     private readStorageAccessToken():angular.IPromise<string> {
