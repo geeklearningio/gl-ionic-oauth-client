@@ -6,7 +6,7 @@ export interface IKeyValueStorageService {
     remove(key: string): angular.IPromise<any>;
 }
 
-export class LocalStorageKeyValueStorageService implements IKeyValueStorageService{
+export class KeyValueStorageService implements IKeyValueStorageService{
 
     /* @ngInject */
     constructor(private $q:angular.IQService, private $timeout: angular.ITimeoutService) {

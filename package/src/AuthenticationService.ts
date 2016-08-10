@@ -1,4 +1,4 @@
-﻿import {LocalStorageKeyValueStorageService, IKeyValueStorageService} from "./LocalStorageKeyValueStorageService";
+﻿import {IKeyValueStorageService, KeyValueStorageService} from "./KeyValueStorageService";
 export interface IUrlAndState {
     url:string,
     state:string
@@ -27,8 +27,6 @@ export class AuthenticationService {
 
     private authenticationCodeDidNotWork:boolean;
 
-    private keyValueStorageService:IKeyValueStorageService;
-
     private currentAccessToken:string;
 
     /* @ngInject */
@@ -39,17 +37,7 @@ export class AuthenticationService {
                 private $state:angular.ui.IStateService,
                 private $timeout:angular.ITimeoutService,
                 private $window:any,
-                private localStorageKeyValueStorageService:LocalStorageKeyValueStorageService) {
-        this.setKeyValueStorageService(this.localStorageKeyValueStorageService);
-    }
-
-    /**
-     * You can use your own KeyValueStorageService if you don't want to store the tokens in the local storage
-     * @param keyValueStorageService
-     */
-    public setKeyValueStorageService(keyValueStorageService:IKeyValueStorageService) {
-        this.keyValueStorageService = keyValueStorageService;
-        this.currentAccessToken = null;
+                private keyValueStorageService:KeyValueStorageService) {
         this.getAndSetCurrentAccessToken();
     }
 
@@ -380,5 +368,5 @@ declare var exports:any;
 
 exports = angular.module("gl-ionic-oauth-client", [])
     .service("authenticationService", AuthenticationService)
-    .service("localStorageKeyValueStorageService", LocalStorageKeyValueStorageService)
+    .service("keyValueStorageService", KeyValueStorageService)
 ;

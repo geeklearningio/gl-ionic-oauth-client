@@ -15,8 +15,11 @@ export class MainController {
                 private $state: angular.ui.IStateService) {
 
         // TODO: change these fields to connect to your oAuth server
-        var clientId = "clientId";
-        var oauthUrl = "https://your-oauth-server/Login";
+/*        var clientId = "clientId";
+        var oauthUrl = "https://your-oauth-server/Login";*/
+
+        var clientId = "e25fcc31-a1a1-4aa8-924e-52770a6452fe";
+        var oauthUrl = "https://bpce-identity-lab.azurewebsites.net/account/Login";
 
 
         this.authenticationService.init(clientId, oauthUrl);
