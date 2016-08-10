@@ -41,6 +41,7 @@ export class AuthenticationService {
                 private $window:any,
                 private localStorageKeyValueStorageService:LocalStorageKeyValueStorageService) {
         this.setKeyValueStorageService(this.localStorageKeyValueStorageService);
+        this.isLoggedIn();
     }
 
     /**
