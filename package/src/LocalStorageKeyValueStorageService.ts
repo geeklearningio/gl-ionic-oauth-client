@@ -1,27 +1,35 @@
 ﻿'use strict';
 
 export interface IKeyValueStorageService {
-    get(key: string): string;
-    set(key: string, value: string);
-    remove(key: string);
+    get(key: string): angular.IPromise<string>;
+    set(key: string, value: any): angular.IPromise<any>;
+    remove(key: string): angular.IPromise<any>;
 }
 
 export class LocalStorageKeyValueStorageService implements IKeyValueStorageService{
 
     /* @ngInject */
-    constructor() {
+    constructor(private $q:angular.IQService, private $timeout: angular.ITimeoutService) {
 
     }
 
-    public get(key: string): string {
-        return <string>localStorage.getItem(key);
+    public get(key: string): angular.IPromise<string> {
+        var deferred:ng.IDeferred<any> = this.$q.defer();
+        deferred.resolve(<string>localStorage.getItem(key));
+        return deferred.promise;
     }
 
-    public set(key: string, value: string) {
+    public set(key: string, value: string): angular.IPromise<any> {
+        var deferred:ng.IDeferred<any> = this.$q.defer();
         localStorage.setItem(key, value);
+        deferred.resolve();
+        return deferred.promise;
     }
 
-    remove(key: string) {
+    remove(key: string): angular.IPromise<any> {
+        var deferred:ng.IDeferred<any> = this.$q.defer();
         delete window.localStorage[key];
+        deferred.resolve();
+        return deferred.promise;
     }
 }

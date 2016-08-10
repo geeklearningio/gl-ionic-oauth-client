@@ -1,3 +1,4 @@
+import { LocalStorageKeyValueStorageService, IKeyValueStorageService } from "./LocalStorageKeyValueStorageService";
 export interface IUrlAndState {
     url: string;
     state: string;
@@ -10,6 +11,7 @@ export declare class AuthenticationService {
     private $state;
     private $timeout;
     private $window;
+    private localStorageKeyValueStorageService;
     static AuthenticationAccessTokenStorageKey: string;
     static AuthenticationRefreshTokenStorageKey: string;
     static AuthenticationOAuthError: string;
@@ -23,16 +25,27 @@ export declare class AuthenticationService {
     private clientId;
     private baseAuthUrl;
     private oAuthState;
-    isLoggedIn: boolean;
     isLoading: boolean;
     private authenticationCodeDidNotWork;
-    constructor($rootScope: angular.IRootScopeService, $q: angular.IQService, ionic: any, $cordovaInAppBrowser: any, $state: angular.ui.IStateService, $timeout: angular.ITimeoutService, $window: any);
+    private keyValueStorageService;
+    private currentAccessToken;
+    constructor($rootScope: angular.IRootScopeService, $q: angular.IQService, ionic: any, $cordovaInAppBrowser: any, $state: angular.ui.IStateService, $timeout: angular.ITimeoutService, $window: any, localStorageKeyValueStorageService: LocalStorageKeyValueStorageService);
+    /**
+     * You can use your own KeyValueStorageService if you don't want to store the tokens in the local storage
+     * @param keyValueStorageService
+     */
+    setKeyValueStorageService(keyValueStorageService: IKeyValueStorageService): void;
     /**
      * Init the Service
      * @param clientId: the app client ID
      * @param baseAuthUrl: the Login function url of your OAuth server
      */
     init(clientId: string, baseAuthUrl: string): void;
+    /**
+     * check if user is already logged in
+     * @returns {IPromise<boolean>}
+     */
+    isLoggedIn(): angular.IPromise<boolean>;
     /**
      * Handle the OAuth of your application
      * @param apiOAuthFunction: Your API function that will give you the accessToken by getting the accessCode.
