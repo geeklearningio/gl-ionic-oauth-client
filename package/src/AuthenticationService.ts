@@ -1,4 +1,5 @@
-﻿export interface IUrlAndState {
+﻿import {LocalStorageKeyValueStorageService, IKeyValueStorageService} from "./LocalStorageKeyValueStorageService";
+export interface IUrlAndState {
     url: string,
     state: string
 }
@@ -27,6 +28,8 @@ export class AuthenticationService {
 
     private authenticationCodeDidNotWork: boolean;
 
+    private keyValueStorageService: IKeyValueStorageService;
+
     /* @ngInject */
     constructor(private $rootScope: angular.IRootScopeService,
         private $q: angular.IQService,
@@ -34,12 +37,22 @@ export class AuthenticationService {
         private $cordovaInAppBrowser: any,
         private $state: angular.ui.IStateService,
         private $timeout: angular.ITimeoutService,
-        private $window: any) {
+        private $window: any,
+        private localStorageKeyValueStorageService: LocalStorageKeyValueStorageService) {
+        this.setKeyValueStorageService(this.localStorageKeyValueStorageService);
         if (this.readStorageAccessToken()) {
             this.isLoggedIn = true;
         } else {
             this.isLoggedIn = false;
         }
+    }
+
+    /**
+     * You can use your own KeyValueStorageService if you don't want to store the tokens in the local storage
+     * @param keyValueStorageService
+     */
+    public setKeyValueStorageService(keyValueStorageService: IKeyValueStorageService) {
+        this.keyValueStorageService = keyValueStorageService;
     }
 
     /**
@@ -208,27 +221,27 @@ export class AuthenticationService {
     }
 
     public writeStorageAccessToken(authToken: string): void {
-        localStorage.setItem(AuthenticationService.AuthenticationAccessTokenStorageKey, authToken);
+        this.keyValueStorageService.set(AuthenticationService.AuthenticationAccessTokenStorageKey, authToken);
     }
 
     private readStorageAccessToken(): string {
-        return localStorage.getItem(AuthenticationService.AuthenticationAccessTokenStorageKey);
+        return this.keyValueStorageService.get(AuthenticationService.AuthenticationAccessTokenStorageKey);
     }
 
     private removeStorageAccessToken() {
-        delete window.localStorage[AuthenticationService.AuthenticationAccessTokenStorageKey];
+        this.keyValueStorageService.remove(AuthenticationService.AuthenticationAccessTokenStorageKey);
     }
 
     private writeStorageRefreshToken(refreshToken: string): void {
-        localStorage.setItem(AuthenticationService.AuthenticationRefreshTokenStorageKey, refreshToken);
+        this.keyValueStorageService.set(AuthenticationService.AuthenticationRefreshTokenStorageKey, refreshToken);
     }
 
     private readStorageRefreshToken(): string {
-        return localStorage.getItem(AuthenticationService.AuthenticationRefreshTokenStorageKey);
+        return this.keyValueStorageService.get(AuthenticationService.AuthenticationRefreshTokenStorageKey);
     }
 
     private removeStorageRefreshToken() {
-        delete window.localStorage[AuthenticationService.AuthenticationRefreshTokenStorageKey];
+        this.keyValueStorageService.remove(AuthenticationService.AuthenticationRefreshTokenStorageKey);
     }
 
     private launchExternalLink(url: string, target: string): void {
@@ -303,4 +316,5 @@ declare var exports: any;
 
 exports = angular.module("gl-ionic-oauth-client", [])
     .service("authenticationService", AuthenticationService)
+    .service("localStorageKeyValueStorageService", LocalStorageKeyValueStorageService)
     ;
