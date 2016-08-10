@@ -41,7 +41,7 @@ export class AuthenticationService {
                 private $window:any,
                 private localStorageKeyValueStorageService:LocalStorageKeyValueStorageService) {
         this.setKeyValueStorageService(this.localStorageKeyValueStorageService);
-        this.isLoggedIn();
+        this.getAndSetCurrentAccessToken();
     }
 
     /**
@@ -50,6 +50,7 @@ export class AuthenticationService {
      */
     public setKeyValueStorageService(keyValueStorageService:IKeyValueStorageService) {
         this.keyValueStorageService = keyValueStorageService;
+        this.getAndSetCurrentAccessToken();
     }
 
     /**
@@ -69,13 +70,30 @@ export class AuthenticationService {
      */
     public isLoggedIn():angular.IPromise<boolean> {
         var deferred:ng.IDeferred<any> = this.$q.defer();
+        this.getAndSetCurrentAccessToken()
+            .then((accessToken:string) => {
+                if (accessToken) {
+                    deferred.resolve(true);
+                } else {
+                    deferred.resolve(false);
+                }
+            });
+        return deferred.promise;
+    }
+
+    /**
+     * get current access token from storage and save it for later
+     * @returns {IPromise<any>}
+     */
+    private getAndSetCurrentAccessToken(): angular.IPromise<string> {
+        var deferred:ng.IDeferred<any> = this.$q.defer();
         this.readStorageAccessToken()
             .then((accessToken:string) => {
                 if (accessToken) {
                     this.currentAccessToken = accessToken;
-                    deferred.resolve(true);
+                    deferred.resolve(accessToken);
                 } else {
-                    deferred.resolve(false);
+                    deferred.resolve(null);
                 }
             });
         return deferred.promise;
