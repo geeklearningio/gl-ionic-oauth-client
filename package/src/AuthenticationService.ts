@@ -41,7 +41,6 @@ export class AuthenticationService {
                 private $window:any,
                 private localStorageKeyValueStorageService:LocalStorageKeyValueStorageService) {
         this.setKeyValueStorageService(this.localStorageKeyValueStorageService);
-        this.getAndSetCurrentAccessToken();
     }
 
     /**
@@ -50,6 +49,7 @@ export class AuthenticationService {
      */
     public setKeyValueStorageService(keyValueStorageService:IKeyValueStorageService) {
         this.keyValueStorageService = keyValueStorageService;
+        this.currentAccessToken = null;
         this.getAndSetCurrentAccessToken();
     }
 
@@ -68,16 +68,21 @@ export class AuthenticationService {
      * check if user is already logged in
      * @returns {IPromise<boolean>}
      */
-    public isLoggedIn():angular.IPromise<boolean> {
+    public isAuthenticated():angular.IPromise<boolean> {
         var deferred:ng.IDeferred<any> = this.$q.defer();
-        this.getAndSetCurrentAccessToken()
-            .then((accessToken:string) => {
-                if (accessToken) {
-                    deferred.resolve(true);
-                } else {
-                    deferred.resolve(false);
-                }
-            });
+
+        if (this.currentAccessToken) {
+            deferred.resolve(true);
+        } else {
+            this.getAndSetCurrentAccessToken()
+                .then((accessToken:string) => {
+                    if (accessToken) {
+                        deferred.resolve(true);
+                    } else {
+                        deferred.resolve(false);
+                    }
+                });
+        }
         return deferred.promise;
     }
 
@@ -108,8 +113,8 @@ export class AuthenticationService {
     public handleOAuth(apiOAuthFunction:Function, successRedirectUrlAndState:IUrlAndState, oAuthRedirectState:string = 'login') {
         this.apiOAuthFunction = apiOAuthFunction;
         this.handleLogin(successRedirectUrlAndState)
-            .then((isLoggedIn:boolean) => {
-                if (!isLoggedIn) {
+            .then((isAuthenticated:boolean) => {
+                if (!isAuthenticated) {
                     this.authenticationCodeDidNotWork = false;
                     if (this.ionic.Platform.isReady || !this.ionic.Platform.isWebView()) {
                         this.launchOAuth(oAuthRedirectState);
@@ -131,12 +136,12 @@ export class AuthenticationService {
         if (this.handleAuthentificationCode(successRedirectUrlAndState)) {
             deferred.resolve(true);
         } else {
-            this.isLoggedIn()
-                .then((isLoggedIn:boolean) => {
-                    if (isLoggedIn) {
+            this.isAuthenticated()
+                .then((isAuthenticated:boolean) => {
+                    if (isAuthenticated) {
                         this.$state.go(successRedirectUrlAndState.state);
                     }
-                    deferred.resolve(isLoggedIn);
+                    deferred.resolve(isAuthenticated);
                 });
         }
         return deferred.promise;
