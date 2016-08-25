@@ -26,5 +26,8 @@
     "typescript": "^1.8.10",
     "typings": "^1.3.0",
     "webpack": "^1.13.1"
+  },
+  "dependencies": {
+    "gl-ionic-oauth-client": "git+https://github.com/geeklearningio/gl-ionic-oauth-client.git"
   }
 }

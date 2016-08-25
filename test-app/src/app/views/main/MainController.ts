@@ -1,6 +1,6 @@
 ﻿'use strict';
 import {FakeAPIService} from "../../services/FakeAPIService";
-import {AuthenticationService} from "../../../../node_modules/gl-ionic-oauth-client/src/AuthenticationService";
+import {AuthenticationService} from "../../../../node_modules/gl-ionic-oauth-client/package/src/AuthenticationService";
 
 export class MainController {
 
@@ -15,12 +15,8 @@ export class MainController {
                 private $state: angular.ui.IStateService) {
 
         // TODO: change these fields to connect to your oAuth server
-/*        var clientId = "clientId";
-        var oauthUrl = "https://your-oauth-server/Login";*/
-
-        var clientId = "e25fcc31-a1a1-4aa8-924e-52770a6452fe";
-        var oauthUrl = "https://bpce-identity-lab.azurewebsites.net/account/Login";
-
+        var clientId = "clientId";
+        var oauthUrl = "https://your-oauth-server/Login";
 
         this.authenticationService.init(clientId, oauthUrl);
 

@@ -4,7 +4,7 @@
 'use strict';
 
 import 'ionic-sdk/release/js/ionic.bundle';
-import 'gl-ionic-oauth-client/src/AuthenticationService.ts';
+import 'gl-ionic-oauth-client/package/src/AuthenticationService';
 import 'ng-cordova';
 
 //add root style dependency
