@@ -206,7 +206,7 @@ export class AuthenticationService {
                 } else {
                     this.isLoading = false;
                     this.logout();
-                    deferred.resolve();
+                    deferred.reject('no refresh token found');
                 }
             });
         return deferred.promise;
