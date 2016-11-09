@@ -52,11 +52,11 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var LocalStorageKeyValueStorageService_1 = __webpack_require__(2);
+	var KeyValueStorageService_1 = __webpack_require__(2);
 	var AuthenticationService = (function () {
 	    /* @ngInject */
-	    AuthenticationService.$inject = ["$rootScope", "$q", "ionic", "$cordovaInAppBrowser", "$state", "$timeout", "$window", "localStorageKeyValueStorageService"];
-	    function AuthenticationService($rootScope, $q, ionic, $cordovaInAppBrowser, $state, $timeout, $window, localStorageKeyValueStorageService) {
+	    AuthenticationService.$inject = ["$rootScope", "$q", "ionic", "$cordovaInAppBrowser", "$state", "$timeout", "$window", "keyValueStorageService"];
+	    function AuthenticationService($rootScope, $q, ionic, $cordovaInAppBrowser, $state, $timeout, $window, keyValueStorageService) {
 	        this.$rootScope = $rootScope;
 	        this.$q = $q;
 	        this.ionic = ionic;
@@ -64,18 +64,11 @@
 	        this.$state = $state;
 	        this.$timeout = $timeout;
 	        this.$window = $window;
-	        this.localStorageKeyValueStorageService = localStorageKeyValueStorageService;
+	        this.keyValueStorageService = keyValueStorageService;
 	        this.cordovaInAppBrowserLoadstartUnsuscribe = null;
 	        this.cordovaInAppBrowserExitUnsuscribe = null;
-	        this.setKeyValueStorageService(this.localStorageKeyValueStorageService);
+	        this.getAndSetCurrentAccessToken();
 	    }
-	    /**
-	     * You can use your own KeyValueStorageService if you don't want to store the tokens in the local storage
-	     * @param keyValueStorageService
-	     */
-	    AuthenticationService.prototype.setKeyValueStorageService = function (keyValueStorageService) {
-	        this.keyValueStorageService = keyValueStorageService;
-	    };
 	    /**
 	     * Init the Service
 	     * @param clientId: the app client ID
@@ -90,17 +83,39 @@
 	     * check if user is already logged in
 	     * @returns {IPromise<boolean>}
 	     */
-	    AuthenticationService.prototype.isLoggedIn = function () {
+	    AuthenticationService.prototype.isAuthenticated = function () {
+	        var deferred = this.$q.defer();
+	        if (this.currentAccessToken) {
+	            deferred.resolve(true);
+	        }
+	        else {
+	            this.getAndSetCurrentAccessToken()
+	                .then(function (accessToken) {
+	                if (accessToken) {
+	                    deferred.resolve(true);
+	                }
+	                else {
+	                    deferred.resolve(false);
+	                }
+	            });
+	        }
+	        return deferred.promise;
+	    };
+	    /**
+	     * get current access token from storage and save it for later
+	     * @returns {IPromise<any>}
+	     */
+	    AuthenticationService.prototype.getAndSetCurrentAccessToken = function () {
 	        var _this = this;
 	        var deferred = this.$q.defer();
 	        this.readStorageAccessToken()
 	            .then(function (accessToken) {
 	            if (accessToken) {
 	                _this.currentAccessToken = accessToken;
-	                deferred.resolve(true);
+	                deferred.resolve(accessToken);
 	            }
 	            else {
-	                deferred.resolve(false);
+	                deferred.resolve(null);
 	            }
 	        });
 	        return deferred.promise;
@@ -116,8 +131,8 @@
 	        if (oAuthRedirectState === void 0) { oAuthRedirectState = 'login'; }
 	        this.apiOAuthFunction = apiOAuthFunction;
 	        this.handleLogin(successRedirectUrlAndState)
-	            .then(function (isLoggedIn) {
-	            if (!isLoggedIn) {
+	            .then(function (isAuthenticated) {
+	            if (!isAuthenticated) {
 	                _this.authenticationCodeDidNotWork = false;
 	                if (_this.ionic.Platform.isReady || !_this.ionic.Platform.isWebView()) {
 	                    _this.launchOAuth(oAuthRedirectState);
@@ -140,12 +155,12 @@
 	            deferred.resolve(true);
 	        }
 	        else {
-	            this.isLoggedIn()
-	                .then(function (isLoggedIn) {
-	                if (isLoggedIn) {
+	            this.isAuthenticated()
+	                .then(function (isAuthenticated) {
+	                if (isAuthenticated) {
 	                    _this.$state.go(successRedirectUrlAndState.state);
 	                }
-	                deferred.resolve(isLoggedIn);
+	                deferred.resolve(isAuthenticated);
 	            });
 	        }
 	        return deferred.promise;
@@ -220,7 +235,7 @@
 	            else {
 	                _this.isLoading = false;
 	                _this.logout();
-	                deferred.resolve();
+	                deferred.reject('no refresh token found');
 	            }
 	        });
 	        return deferred.promise;
@@ -273,12 +288,15 @@
 	    };
 	    AuthenticationService.prototype.writeStorageAccessToken = function (authToken) {
 	        this.keyValueStorageService.set(AuthenticationService.AuthenticationAccessTokenStorageKey, authToken);
+	        this.currentAccessToken = authToken;
 	    };
 	    AuthenticationService.prototype.readStorageAccessToken = function () {
 	        var deferred = this.$q.defer();
 	        this.keyValueStorageService.get(AuthenticationService.AuthenticationAccessTokenStorageKey)
 	            .then(function (value) {
 	            deferred.resolve(value);
+	        }, function () {
+	            deferred.resolve(null);
 	        });
 	        return deferred.promise;
 	    };
@@ -374,7 +392,7 @@
 	exports.AuthenticationService = AuthenticationService;
 	exports = angular.module("gl-ionic-oauth-client", [])
 	    .service("authenticationService", AuthenticationService)
-	    .service("localStorageKeyValueStorageService", LocalStorageKeyValueStorageService_1.LocalStorageKeyValueStorageService);
+	    .service("keyValueStorageService", KeyValueStorageService_1.KeyValueStorageService);
 
 
 /***/ },
@@ -382,33 +400,33 @@
 /***/ function(module, exports) {
 
 	'use strict';
-	var LocalStorageKeyValueStorageService = (function () {
+	var KeyValueStorageService = (function () {
 	    /* @ngInject */
-	    LocalStorageKeyValueStorageService.$inject = ["$q", "$timeout"];
-	    function LocalStorageKeyValueStorageService($q, $timeout) {
+	    KeyValueStorageService.$inject = ["$q", "$timeout"];
+	    function KeyValueStorageService($q, $timeout) {
 	        this.$q = $q;
 	        this.$timeout = $timeout;
 	    }
-	    LocalStorageKeyValueStorageService.prototype.get = function (key) {
+	    KeyValueStorageService.prototype.get = function (key) {
 	        var deferred = this.$q.defer();
 	        deferred.resolve(localStorage.getItem(key));
 	        return deferred.promise;
 	    };
-	    LocalStorageKeyValueStorageService.prototype.set = function (key, value) {
+	    KeyValueStorageService.prototype.set = function (key, value) {
 	        var deferred = this.$q.defer();
 	        localStorage.setItem(key, value);
 	        deferred.resolve();
 	        return deferred.promise;
 	    };
-	    LocalStorageKeyValueStorageService.prototype.remove = function (key) {
+	    KeyValueStorageService.prototype.remove = function (key) {
 	        var deferred = this.$q.defer();
 	        delete window.localStorage[key];
 	        deferred.resolve();
 	        return deferred.promise;
 	    };
-	    return LocalStorageKeyValueStorageService;
+	    return KeyValueStorageService;
 	}());
-	exports.LocalStorageKeyValueStorageService = LocalStorageKeyValueStorageService;
+	exports.KeyValueStorageService = KeyValueStorageService;
 
 
 /***/ }

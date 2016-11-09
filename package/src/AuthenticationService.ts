@@ -271,6 +271,8 @@ export class AuthenticationService {
         this.keyValueStorageService.get(AuthenticationService.AuthenticationAccessTokenStorageKey)
             .then((value:string) => {
                 deferred.resolve(value);
+            }, () => {
+                deferred.resolve(null);
             });
         return deferred.promise;
     }
