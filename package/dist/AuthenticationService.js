@@ -196,11 +196,18 @@
 	     * @param logoutState: the state to go to after the logout.
 	     */
 	    AuthenticationService.prototype.logout = function (logoutState) {
+	        var _this = this;
 	        if (logoutState === void 0) { logoutState = 'login'; }
+	        var deferred = this.$q.defer();
+	        var removalSuccessCount = 0;
 	        this.currentAccessToken = null;
-	        this.removeStorageAccessToken();
 	        this.removeStorageRefreshToken();
-	        this.$state.go(logoutState);
+	        this.removeStorageAccessToken()
+	            .then(function () {
+	            _this.$state.go(logoutState);
+	            deferred.resolve();
+	        });
+	        return deferred.promise;
 	    };
 	    /**
 	     * Refresh the accessToken using the refreshToken or logout if it fails doing so.
@@ -301,7 +308,7 @@
 	        return deferred.promise;
 	    };
 	    AuthenticationService.prototype.removeStorageAccessToken = function () {
-	        this.keyValueStorageService.remove(AuthenticationService.AuthenticationAccessTokenStorageKey);
+	        return this.keyValueStorageService.remove(AuthenticationService.AuthenticationAccessTokenStorageKey);
 	    };
 	    AuthenticationService.prototype.writeStorageRefreshToken = function (refreshToken) {
 	        this.keyValueStorageService.set(AuthenticationService.AuthenticationRefreshTokenStorageKey, refreshToken);

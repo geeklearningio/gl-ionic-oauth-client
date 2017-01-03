@@ -169,10 +169,16 @@ export class AuthenticationService {
      * @param logoutState: the state to go to after the logout.
      */
     public logout(logoutState:string = 'login') {
+        var deferred:ng.IDeferred<any> = this.$q.defer();
+        var removalSuccessCount = 0;
         this.currentAccessToken = null;
-        this.removeStorageAccessToken();
         this.removeStorageRefreshToken();
-        this.$state.go(logoutState);
+        this.removeStorageAccessToken()
+          .then(() => {
+              this.$state.go(logoutState);
+              deferred.resolve();
+          });
+        return deferred.promise;
     }
 
     /**
@@ -277,8 +283,8 @@ export class AuthenticationService {
         return deferred.promise;
     }
 
-    private removeStorageAccessToken() {
-        this.keyValueStorageService.remove(AuthenticationService.AuthenticationAccessTokenStorageKey);
+    private removeStorageAccessToken(): angular.IPromise<any> {
+        return this.keyValueStorageService.remove(AuthenticationService.AuthenticationAccessTokenStorageKey);
     }
 
     private writeStorageRefreshToken(refreshToken:string):void {
