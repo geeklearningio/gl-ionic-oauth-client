@@ -189,7 +189,6 @@ export class AuthenticationService {
      */
     public refreshTokenOrLogout(apiRefreshTokenFunction:Function, logoutState:string = 'login'):angular.IPromise<any> {
         var deferred:ng.IDeferred<any> = this.$q.defer();
-        this.isLoading = true;
 
         this.readStorageRefreshToken()
             .then((refreshToken:string) => {
@@ -202,15 +201,12 @@ export class AuthenticationService {
                         .then((result) => {
                             this.$rootScope.$broadcast(AuthenticationService.AuthenticationOAuthSuccess);
                             this.writeStorageAccessToken(result.data.content.accessToken);
-                            this.isLoading = false;
                             deferred.resolve(result);
                         }, (error) => {
-                            this.isLoading = false;
                             this.logout();
                             deferred.reject(error);
                         });
                 } else {
-                    this.isLoading = false;
                     this.logout();
                     deferred.reject('no refresh token found');
                 }

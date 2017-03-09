@@ -219,7 +219,6 @@
 	        var _this = this;
 	        if (logoutState === void 0) { logoutState = 'login'; }
 	        var deferred = this.$q.defer();
-	        this.isLoading = true;
 	        this.readStorageRefreshToken()
 	            .then(function (refreshToken) {
 	            if (refreshToken) {
@@ -231,16 +230,13 @@
 	                    .then(function (result) {
 	                    _this.$rootScope.$broadcast(AuthenticationService.AuthenticationOAuthSuccess);
 	                    _this.writeStorageAccessToken(result.data.content.accessToken);
-	                    _this.isLoading = false;
 	                    deferred.resolve(result);
 	                }, function (error) {
-	                    _this.isLoading = false;
 	                    _this.logout();
 	                    deferred.reject(error);
 	                });
 	            }
 	            else {
-	                _this.isLoading = false;
 	                _this.logout();
 	                deferred.reject('no refresh token found');
 	            }
