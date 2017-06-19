@@ -184,14 +184,17 @@ export class AuthenticationService {
      */
     public logout(logoutState:string = 'login') {
         var deferred:ng.IDeferred<any> = this.$q.defer();
-        var removalSuccessCount = 0;
+
         this.currentAccessToken = null;
         this.removeStorageRefreshToken();
         this.removeStorageAccessToken()
-          .then(() => {
-              this.$state.go(logoutState);
-              deferred.resolve();
-          });
+            .then(() => {
+                this.$state.go(logoutState);
+                deferred.resolve();
+            })
+            .catch(reason => {
+                deferred.reject(reason);
+            });
         return deferred.promise;
     }
 
