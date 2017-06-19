@@ -75,6 +75,20 @@ export class AuthenticationService {
     }
 
     /**
+     * get current access token and save it for later if not set
+     * @returns {IPromise<any>}
+     */
+    public getCurrentAccessToken(): angular.IPromise<string> {
+        var deferred:ng.IDeferred<any> = this.$q.defer();
+        if (this.currentAccessToken) {
+            deferred.resolve(this.currentAccessToken);
+        } else {
+            return this.getAndSetCurrentAccessToken();
+        }
+        return deferred.promise;
+    }
+
+    /**
      * get current access token from storage and save it for later
      * @returns {IPromise<any>}
      */

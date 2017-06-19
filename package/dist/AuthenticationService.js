@@ -102,6 +102,20 @@
 	        return deferred.promise;
 	    };
 	    /**
+	     * get current access token and save it for later if not set
+	     * @returns {IPromise<any>}
+	     */
+	    AuthenticationService.prototype.getCurrentAccessToken = function () {
+	        var deferred = this.$q.defer();
+	        if (this.currentAccessToken) {
+	            deferred.resolve(this.currentAccessToken);
+	        }
+	        else {
+	            return this.getAndSetCurrentAccessToken();
+	        }
+	        return deferred.promise;
+	    };
+	    /**
 	     * get current access token from storage and save it for later
 	     * @returns {IPromise<any>}
 	     */

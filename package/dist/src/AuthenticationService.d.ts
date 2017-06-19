@@ -41,6 +41,11 @@ export declare class AuthenticationService {
      */
     isAuthenticated(): angular.IPromise<boolean>;
     /**
+     * get current access token and save it for later if not set
+     * @returns {IPromise<any>}
+     */
+    getCurrentAccessToken(): angular.IPromise<string>;
+    /**
      * get current access token from storage and save it for later
      * @returns {IPromise<any>}
      */
