@@ -1,6 +1,6 @@
 {
   "name": "gl-ionic-oauth-client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Authentification module for Ionic",
   "scripts": {
     "build": "webpack"
