@@ -28,6 +28,8 @@ export class AuthenticationService {
     private authenticationCodeDidNotWork:boolean;
 
     private currentAccessToken:string;
+    private persistentTokenStorage : boolean;
+    private isMobileAuthentication : boolean;
 
     /* @ngInject */
     constructor(private $rootScope:angular.IRootScopeService,
@@ -45,10 +47,14 @@ export class AuthenticationService {
      * Init the Service
      * @param clientId: the app client ID
      * @param baseAuthUrl: the Login function url of your OAuth server
+     * @param isPersistent: Store Tokens in LocalStorage (True) else (False)
+     * @param isMobileAuthentication: True for Mobile OAuth flow False Web OAuth Flow
      */
-    public init(clientId:string, baseAuthUrl:string) {
+    public init(clientId:string, baseAuthUrl:string, isPersistent:boolean = true , isMobileAuthentication:boolean = true) {
         this.clientId = clientId;
         this.baseAuthUrl = baseAuthUrl;
+        this.persistentTokenStorage = isPersistent;
+        this.isMobileAuthentication = isMobileAuthentication;
         this.generateState();
     }
 
@@ -70,6 +76,20 @@ export class AuthenticationService {
                         deferred.resolve(false);
                     }
                 });
+        }
+        return deferred.promise;
+    }
+
+    /**
+     * get current access token and save it for later if not set
+     * @returns {IPromise<any>}
+     */
+    public getCurrentAccessToken(): angular.IPromise<string> {
+        var deferred:ng.IDeferred<any> = this.$q.defer();
+        if (this.currentAccessToken) {
+            deferred.resolve(this.currentAccessToken);
+        } else {
+            return this.getAndSetCurrentAccessToken();
         }
         return deferred.promise;
     }
@@ -139,15 +159,21 @@ export class AuthenticationService {
         this.isLoading = true;
         this.oAuthRedirectState = oAuthRedirectState;
 
-        var redirectUri = document.URL + this.oAuthRedirectState;
-        if (this.ionic.Platform.isWebView()) {
+        let redirectUri = document.URL + this.oAuthRedirectState;
+        if(this.ionic.Platform.isWebView()){
             redirectUri = 'http://localhost/#/' + this.oAuthRedirectState;
         }
+        let authUrl : string = "";
+        if (this.isMobileAuthentication) {
+            authUrl = this.baseAuthUrl + '?protocol=oauth2&scope=' +
+                '&client_id=' + this.clientId +
+                '&state=' + this.oAuthState +
+                '&response_type=code&redirect_uri=' + encodeURIComponent(redirectUri);
+        }
+        else{
+            authUrl = `${this.baseAuthUrl}?returnUrl=${encodeURIComponent(redirectUri)}&grantType=implicit`;
+        }
 
-        var authUrl:string = this.baseAuthUrl + '?protocol=oauth2&scope=' +
-            '&client_id=' + this.clientId +
-            '&state=' + this.oAuthState +
-            '&response_type=code&redirect_uri=' + encodeURIComponent(redirectUri);
         this.launchExternalLink(authUrl, '_blank');
     }
 
@@ -157,9 +183,11 @@ export class AuthenticationService {
      * @returns {any}
      */
     public configureRequest(httpRequestParams:any):any {
-        httpRequestParams.headers['Authorization'] = 'Bearer ' + this.currentAccessToken;
         if (!this.currentAccessToken) {
             console.error('Error: Trying to call an api function before the access token has been retrieved');
+        }
+        else{
+            httpRequestParams.headers['Authorization'] = 'Bearer ' + this.currentAccessToken;
         }
         return httpRequestParams;
     }
@@ -170,14 +198,17 @@ export class AuthenticationService {
      */
     public logout(logoutState:string = 'login') {
         var deferred:ng.IDeferred<any> = this.$q.defer();
-        var removalSuccessCount = 0;
+
         this.currentAccessToken = null;
         this.removeStorageRefreshToken();
         this.removeStorageAccessToken()
-          .then(() => {
-              this.$state.go(logoutState);
-              deferred.resolve();
-          });
+            .then(() => {
+                this.$state.go(logoutState);
+                deferred.resolve();
+            })
+            .catch(reason => {
+                deferred.reject(reason);
+            });
         return deferred.promise;
     }
 
@@ -189,7 +220,6 @@ export class AuthenticationService {
      */
     public refreshTokenOrLogout(apiRefreshTokenFunction:Function, logoutState:string = 'login'):angular.IPromise<any> {
         var deferred:ng.IDeferred<any> = this.$q.defer();
-        this.isLoading = true;
 
         this.readStorageRefreshToken()
             .then((refreshToken:string) => {
@@ -202,15 +232,12 @@ export class AuthenticationService {
                         .then((result) => {
                             this.$rootScope.$broadcast(AuthenticationService.AuthenticationOAuthSuccess);
                             this.writeStorageAccessToken(result.data.content.accessToken);
-                            this.isLoading = false;
                             deferred.resolve(result);
                         }, (error) => {
-                            this.isLoading = false;
                             this.logout();
                             deferred.reject(error);
                         });
                 } else {
-                    this.isLoading = false;
                     this.logout();
                     deferred.reject('no refresh token found');
                 }
@@ -268,18 +295,25 @@ export class AuthenticationService {
     }
 
     public writeStorageAccessToken(authToken:string):void {
-        this.keyValueStorageService.set(AuthenticationService.AuthenticationAccessTokenStorageKey, authToken);
+        if(this.persistentTokenStorage){
+            this.keyValueStorageService.set(AuthenticationService.AuthenticationAccessTokenStorageKey, authToken);
+        }
         this.currentAccessToken = authToken;
     }
 
     private readStorageAccessToken():angular.IPromise<string> {
         var deferred:ng.IDeferred<any> = this.$q.defer();
-        this.keyValueStorageService.get(AuthenticationService.AuthenticationAccessTokenStorageKey)
-            .then((value:string) => {
-                deferred.resolve(value);
-            }, () => {
-                deferred.resolve(null);
-            });
+        if(this.persistentTokenStorage){
+            this.keyValueStorageService.get(AuthenticationService.AuthenticationAccessTokenStorageKey)
+                .then((value:string) => {
+                    deferred.resolve(value);
+                }, () => {
+                    deferred.resolve(null);
+                });
+        }else {
+            deferred.resolve(this.currentAccessToken ? this.currentAccessToken : null);
+        }
+
         return deferred.promise;
     }
 
@@ -293,11 +327,15 @@ export class AuthenticationService {
 
     private readStorageRefreshToken():angular.IPromise<string> {
         var deferred:ng.IDeferred<any> = this.$q.defer();
-        this.keyValueStorageService.get(AuthenticationService.AuthenticationRefreshTokenStorageKey)
-            .then((value:string) => {
-                deferred.resolve(value);
-            });
-        return deferred.promise;
+        if(this.persistentTokenStorage){
+            this.keyValueStorageService.get(AuthenticationService.AuthenticationRefreshTokenStorageKey)
+                .then((value:string) => {
+                    deferred.resolve(value);
+                });
+        }else {
+            deferred.resolve(null);
+        }
+        return deferred.promise
     }
 
     private removeStorageRefreshToken() {
