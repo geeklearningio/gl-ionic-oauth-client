@@ -1,7 +1,7 @@
 ﻿import {IKeyValueStorageService, KeyValueStorageService} from "./KeyValueStorageService";
 export interface IUrlAndState {
-    url:string,
-    state:string
+    mobile:string,
+    web:string
 }
 
 export class AuthenticationService {
@@ -18,10 +18,10 @@ export class AuthenticationService {
     private apiOAuthFunction:Function;
     private oAuthRedirectState:string;
     private successRedirectUrlAndState:IUrlAndState;
+    private oAuthState : string
 
     private clientId:string;
     private baseAuthUrl:string;
-    private oAuthState:string;
 
     public isLoading:boolean;
 
@@ -118,19 +118,19 @@ export class AuthenticationService {
      * @param successRedirectUrlAndState: the url and state of the page you want to go to when the Authentication has succeeded. (The url is needed to work in the web version of your app).
      * @param oAuthRedirectState: the state to redirect to with the accessCode as a Query param.
      */
-    public handleOAuth(apiOAuthFunction:Function, successRedirectUrlAndState:IUrlAndState, oAuthRedirectState:string = 'login') {
+    public handleOAuth(apiOAuthFunction:Function, successRedirectMobileStateAndWebUrl : IUrlAndState) {
         this.apiOAuthFunction = apiOAuthFunction;
-        this.handleLogin(successRedirectUrlAndState)
+        this.handleLogin(successRedirectMobileStateAndWebUrl)
             .then((isAuthenticated:boolean) => {
                 if (!isAuthenticated) {
                     this.authenticationCodeDidNotWork = false;
                     if (this.ionic.Platform.isReady || !this.ionic.Platform.isWebView()) {
-                        this.launchOAuth(oAuthRedirectState);
+                        this.launchOAuth(successRedirectMobileStateAndWebUrl);
                     } else {
                         // if ionic is not ready, wait for 1 second before launching the In App browser or it won't launch on iOS...
                         this.ionic.Platform.ready(() => {
                             this.$timeout(() => {
-                                this.launchOAuth(oAuthRedirectState);
+                                this.launchOAuth(successRedirectMobileStateAndWebUrl);
                             }, 1000);
                         });
                     }
@@ -147,7 +147,7 @@ export class AuthenticationService {
             this.isAuthenticated()
                 .then((isAuthenticated:boolean) => {
                     if (isAuthenticated) {
-                        this.$state.go(successRedirectUrlAndState.state);
+                        this.$state.go(successRedirectUrlAndState.mobile);
                     }
                     deferred.resolve(isAuthenticated);
                 });
@@ -155,19 +155,18 @@ export class AuthenticationService {
         return deferred.promise;
     }
 
-    private launchOAuth(oAuthRedirectState:string = 'login') {
+    private launchOAuth(oAuthRedirectState:IUrlAndState ) {
         this.isLoading = true;
-        this.oAuthRedirectState = oAuthRedirectState;
 
-        let redirectUri = document.URL + this.oAuthRedirectState;
+        let redirectUri = document.URL + oAuthRedirectState.web;
         if(this.ionic.Platform.isWebView()){
-            redirectUri = 'http://localhost/#/' + this.oAuthRedirectState;
+            redirectUri = 'http://localhost/#/' + oAuthRedirectState.mobile;
         }
         let authUrl : string = "";
         if (this.isMobileAuthentication) {
             authUrl = this.baseAuthUrl + '?protocol=oauth2&scope=' +
                 '&client_id=' + this.clientId +
-                '&state=' + this.oAuthState +
+                '&state=' + oAuthRedirectState.mobile +
                 '&response_type=code&redirect_uri=' + encodeURIComponent(redirectUri);
         }
         else{
@@ -397,9 +396,9 @@ export class AuthenticationService {
                 this.isLoading = false;
                 var tempArr = document.URL.split('/?');
                 if (redirect) {
-                    this.$window.location.href = tempArr[0] + '/#/' + this.successRedirectUrlAndState.url;
+                    this.$window.location.href = tempArr[0] + '/#/' + this.successRedirectUrlAndState.web;
                 } else {
-                    this.$state.go(this.successRedirectUrlAndState.state);
+                    this.$state.go(this.successRedirectUrlAndState.mobile);
                 }
             }, (error) => {
                 // if the authentication code didn't work, do not try to use it again
