@@ -17,8 +17,8 @@ export class AuthenticationService {
 
     private apiOAuthFunction:Function;
     private oAuthRedirectState:string;
-    private successRedirectUrlAndState:IUrlAndState;
-    private oAuthState : string
+    private successRedirectMobileStateAndWebUrl:IUrlAndState;
+    private oAuthState : string;
 
     private clientId:string;
     private baseAuthUrl:string;
@@ -115,8 +115,7 @@ export class AuthenticationService {
     /**
      * Handle the OAuth of your application
      * @param apiOAuthFunction: Your API function that will give you the accessToken by getting the accessCode.
-     * @param successRedirectUrlAndState: the url and state of the page you want to go to when the Authentication has succeeded. (The url is needed to work in the web version of your app).
-     * @param oAuthRedirectState: the state to redirect to with the accessCode as a Query param.
+     * @param successRedirectMobileStateAndWebUrl: the url and state of the page you want to go to when the Authentication has succeeded. (The url is needed to work in the web version of your app)
      */
     public handleOAuth(apiOAuthFunction:Function, successRedirectMobileStateAndWebUrl : IUrlAndState) {
         this.apiOAuthFunction = apiOAuthFunction;
@@ -138,16 +137,16 @@ export class AuthenticationService {
             });
     }
 
-    private handleLogin(successRedirectUrlAndState:IUrlAndState):angular.IPromise<boolean> {
+    private handleLogin(successRedirectMobileStateAndWebUrl:IUrlAndState):angular.IPromise<boolean> {
         var deferred:ng.IDeferred<any> = this.$q.defer();
 
-        if (this.handleAuthentificationCode(successRedirectUrlAndState)) {
+        if (this.handleAuthentificationCode(successRedirectMobileStateAndWebUrl)) {
             deferred.resolve(true);
         } else {
             this.isAuthenticated()
                 .then((isAuthenticated:boolean) => {
                     if (isAuthenticated) {
-                        this.$state.go(successRedirectUrlAndState.mobile);
+                        this.$state.go(successRedirectMobileStateAndWebUrl.mobile);
                     }
                     deferred.resolve(isAuthenticated);
                 });
@@ -155,18 +154,18 @@ export class AuthenticationService {
         return deferred.promise;
     }
 
-    private launchOAuth(oAuthRedirectState:IUrlAndState ) {
+    private launchOAuth(successRedirectMobileStateAndWebUrl:IUrlAndState ) {
         this.isLoading = true;
 
-        let redirectUri = document.URL + oAuthRedirectState.web;
+        let redirectUri = document.URL + successRedirectMobileStateAndWebUrl.web;
         if(this.ionic.Platform.isWebView()){
-            redirectUri = 'http://localhost/#/' + oAuthRedirectState.mobile;
+            redirectUri = 'http://localhost/#/' + successRedirectMobileStateAndWebUrl.mobile;
         }
         let authUrl : string = "";
         if (this.isMobileAuthentication) {
             authUrl = this.baseAuthUrl + '?protocol=oauth2&scope=' +
                 '&client_id=' + this.clientId +
-                '&state=' + oAuthRedirectState.mobile +
+                '&state=' + successRedirectMobileStateAndWebUrl.mobile +
                 '&response_type=code&redirect_uri=' + encodeURIComponent(redirectUri);
         }
         else{
@@ -252,11 +251,11 @@ export class AuthenticationService {
         this.oAuthState = text;
     }
 
-    private handleAuthentificationCode(successRedirectUrlAndState:IUrlAndState) {
+    private handleAuthentificationCode(successRedirectMobileStateAndWebUrl:IUrlAndState) {
         if (this.authenticationCodeDidNotWork) {
             return;
         }
-        this.successRedirectUrlAndState = successRedirectUrlAndState;
+        this.successRedirectMobileStateAndWebUrl = successRedirectMobileStateAndWebUrl;
         this.isLoading = true;
         var code:string = this.getUrlParameter('code');
         if (code) {
@@ -396,9 +395,9 @@ export class AuthenticationService {
                 this.isLoading = false;
                 var tempArr = document.URL.split('/?');
                 if (redirect) {
-                    this.$window.location.href = tempArr[0] + '/#/' + this.successRedirectUrlAndState.web;
+                    this.$window.location.href = tempArr[0] + '/#/' + this.successRedirectMobileStateAndWebUrl.web;
                 } else {
-                    this.$state.go(this.successRedirectUrlAndState.mobile);
+                    this.$state.go(this.successRedirectMobileStateAndWebUrl.mobile);
                 }
             }, (error) => {
                 // if the authentication code didn't work, do not try to use it again
