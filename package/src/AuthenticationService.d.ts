@@ -53,10 +53,9 @@ export declare class AuthenticationService {
     /**
      * Handle the OAuth of your application
      * @param apiOAuthFunction: Your API function that will give you the accessToken by getting the accessCode.
-     * @param successRedirectUrlAndState: the url and state of the page you want to go to when the Authentication has succeeded. (The url is needed to work in the web version of your app).
-     * @param oAuthRedirectState: the state to redirect to with the accessCode as a Query param.
+     * @param successRedirectMobileStateAndWebUrl: the url and state of the page you want to go to when the Authentication has succeeded. (The url is needed to work in the web version of your app).
      */
-    handleOAuth(apiOAuthFunction: Function, successRedirectUrlAndState: IUrlAndState, oAuthRedirectState?: string): void;
+    handleOAuth(apiOAuthFunction: Function, successRedirectMobileStateAndWebUrl: IUrlAndState): void;
     private handleLogin(successRedirectUrlAndState);
     private launchOAuth(oAuthRedirectState?);
     /**
