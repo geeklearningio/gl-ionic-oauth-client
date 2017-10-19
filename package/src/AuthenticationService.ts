@@ -310,7 +310,16 @@ export class AuthenticationService {
                 }, () => {
                     deferred.resolve(null);
                 });
-        }else {
+        }
+        else if(this.persistentTokenStorage == null){
+            this.keyValueStorageService.get(AuthenticationService.AuthenticationAccessTokenStorageKey)
+                .then((value : string) => {
+                    deferred.resolve(value);
+                },()=> {
+                    deferred.resolve(this.currentAccessToken ? this.currentAccessToken : null)
+                })
+        }
+        else {
             deferred.resolve(this.currentAccessToken ? this.currentAccessToken : null);
         }
 
